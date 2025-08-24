@@ -1,49 +1,59 @@
-# SlitherChat.io - YouTube Chat Snake Oyunu
+# SlitherChat.io - Gerçek YouTube Chat Yılan Oyunu
 
-Bu uygulama, YouTube canlı yayın sohbetlerini simüle ederek sohbete yazanların her birini bir yılan olarak oyunda gösteren bir slither.io benzeri oyundur.
+Bu uygulama, YouTube canlı yayın chat mesajlarını gerçek zamanlı olarak takip ederek, her mesaj yazanı bir yılan olarak gösteren slither.io benzeri bir oyundur. 
 
-## Özellikler
+## GERÇEK CHAT VERİLERİ İÇİN BACKEND GEREKLİDİR
 
-- Slither.io benzeri oyun mekanizması
-- Her chat mesajı yazan bir yılan olarak ekrana gelir
-- Yılanlar yem toplayarak ve diğer yılanları yiyerek büyüyebilir
-- Gerçek zamanlı skor tablosu ve chat paneli
-
-## CORS Kısıtlamaları Hakkında
-
-YouTube, güvenlik nedeniyle X-Frame-Options: sameorigin ayarıyla iframe içinde kullanımı kısıtlamaktadır. Bu nedenle, doğrudan tarayıcıdan açıldığında gerçek chat verilerine erişemeyiz.
-
-Bu sorunu çözmek için:
-
-1. Uygulama varsayılan olarak simülasyon modunda çalışır
-2. Gerçek YouTube chat verilerine erişim için bir web sunucusu ve proxy gereklidir
-3. Lokal geliştirmede Python veya Node.js gibi basit bir web sunucusu kullanabilirsiniz
-
-## Nasıl Çalışır?
-
-1. Uygulamayı açın
-2. YouTube video ID'si girin veya boş bırakıp "Başlat" butonuna tıklayın
-3. Simülasyon modunda rastgele chat mesajları ve yılanlar oluşacaktır
-4. Her yılan otomatik olarak hareket edecek ve yem toplayacaktır
-5. Büyük yılanlar küçük yılanları yiyebilir
+Bu projede YouTube chat verilerini çekmek için bir Node.js backend API kullanılır. Bu, tarayıcı güvenlik kısıtlamalarını (CORS) aşmanın en güvenli ve etkili yoludur.
 
 ## Kurulum
 
-Bu uygulama saf JavaScript, HTML ve CSS kullanılarak geliştirilmiştir. Ek kütüphane veya framework gerekmez.
+1. Gereksinimleri yükleyin:
+   ```bash
+   npm install
+   ```
 
-### Lokal Web Sunucusu İle Çalıştırma:
+2. Sunucuyu başlatın:
+   ```bash
+   npm start
+   ```
 
-```
-# Python ile
-cd slither-chat
-python -m http.server
+3. Tarayıcınızda şu adresi ziyaret edin: http://localhost:3000
 
-# Node.js ile
-npm install -g http-server
-cd slither-chat
-http-server
-```
+## Nasıl Çalışır?
 
-## Geliştiriciler İçin
+1. Bir YouTube canlı yayın URL'si veya Video ID'si girin
+2. "Başlat" butonuna tıklayın
+3. Chat mesajları gelmeye başladığında, her mesaj yazan bir yılan olarak ekranda görünecek
+4. Yılanlar otomatik olarak hareket edip yem toplayacak ve birbirleriyle etkileşime girecek
 
-CORS kısıtlamalarını aşmak için bir backend proxy oluşturulabilir. Bu durumda `chat-parser.js` dosyasında gerekli değişiklikleri yaparak YouTube API erişimini doğrudan sağlayabilirsiniz.
+## Backend API Detayları
+
+Node.js backend API, iki ana endpoint sunar:
+
+- `/api/video/:videoId` - Video bilgilerini ve canlı yayın chat ID'sini alır
+- `/api/chat/:videoId` - Canlı yayın chat mesajlarını alır
+
+Bu backend API, YouTube Data API v3'ü kullanarak canlı yayın chat verilerini çeker.
+
+## CORS Sorununu Çözme
+
+Backend proxy yaklaşımı, YouTube'un iframe ve JavaScript kısıtlamalarını aşmak için en etkili çözümdür. Bu yöntem sayesinde:
+
+1. YouTube API istekleri sunucu tarafından yapılır
+2. Tarayıcı güvenlik kısıtlamaları (CORS) aşılır
+3. API anahtarı güvenli bir şekilde saklanabilir
+4. Rate-limiting ve önbellek stratejileri uygulanabilir
+
+## Geliştirme
+
+- `server.js` - Node.js backend API
+- `js/chat-parser.js` - Backend API ile iletişim kurma ve mesajları işleme
+- `js/app.js` - Ana uygulama mantığı
+- `js/snake.js` ve `js/food.js` - Oyun nesneleri
+- `js/game.js` - Oyun mekanikleri ve render döngüsü
+
+## Güvenlik Notları
+
+- Bu uygulama Node.js backend gerektirdiğinden, GitHub Pages üzerinde tam işlevsellikle çalıştırılamaz
+- Uygulamayı kendi sunucunuzda barındırırken, API anahtarını .env dosyasına taşımanızı öneririz

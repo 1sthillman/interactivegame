@@ -53,12 +53,12 @@ class ChatParser {
     }
     
     /**
-     * Chat'i bağla
+     * Chat'i bağla - Backend API kullanarak
      * @param {string} videoIdOrUrl - Video ID'si veya URL'si
      * @returns {Promise} - Bağlantı başarılı olduğunda resolve olan Promise
      */
     connect(videoIdOrUrl) {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 // Video ID'yi çıkar
                 this.videoId = this.extractVideoId(videoIdOrUrl);
@@ -70,59 +70,66 @@ class ChatParser {
                 
                 console.log('Bağlanılıyor:', this.videoId);
                 
-                // Önceki iframe'i temizle
+                // Önceki bağlantıyı temizle
                 this.disconnect();
                 
                 // Durumu güncelle
                 this.connected = false;
                 this.lastMessageIds.clear();
                 
-                // iframe oluştur ve yükle
-                this.iframe = document.createElement('iframe');
-                const hostname = window.location.hostname || 'localhost';
-                this.iframe.src = `https://www.youtube.com/live_chat?v=${this.videoId}&embed_domain=${hostname}`;
-                console.log(`Chat iframe URL: ${this.iframe.src}, Host: ${hostname}`);
-                this.iframe.width = '1280px';
-                this.iframe.height = '720px';
-                this.iframeContainer.appendChild(this.iframe);
-                
-                // iframe yüklendiğinde olayı
-                this.iframe.onload = () => {
-                    console.log('Chat iframe yüklendi');
-                    
-                    // Bağlantı durumunu ayarla
-                    this.connected = true;
-                    
-                    // Mesajları periyodik olarak kontrol et
-                    this.checkInterval = setInterval(() => {
-                        this.parseMessages();
-                    }, CONFIG.chatCheckInterval);
-                    
-                    // Başarılı
-                    resolve();
-                };
-                
-                // iframe yüklenmezse
-                this.iframe.onerror = (error) => {
-                    console.error('Chat iframe yüklenemedi:', error);
-                    reject(new Error('Chat yüklenemedi. Video geçerli bir canlı yayın olabilir mi?'));
-                };
-                
-                // 10 saniye zaman aşımı
-                setTimeout(() => {
-                    if (!this.connected) {
-                        reject(new Error('Bağlantı zaman aşımına uğradı. Canlı yayın aktif değil olabilir.'));
-                    }
-                }, 10000);
-                
-                // Eğer bağlanılır bağlanılmaz simülasyon moduna geçilecekse
+                // Simülasyon modu kontrolü
                 if (CONFIG.simulationMode) {
                     console.warn('Simülasyon modu aktif - Chat API devre dışı bırakıldı');
                     this.startSimulation();
                     resolve();
+                    return;
+                }
+                
+                try {
+                    // Backend API ile video bilgilerini kontrol et
+                    const response = await fetch(`/api/video/${this.videoId}`);
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Video bulunamadı');
+                    }
+                    
+                    const videoData = await response.json();
+                    
+                    if (!videoData.liveChatId) {
+                        throw new Error('Bu video için aktif canlı yayın sohbeti bulunamadı');
+                    }
+                    
+                    // Bağlantı durumunu ayarla
+                    this.connected = true;
+                    this.liveChatId = videoData.liveChatId;
+                    
+                    console.log('Chat API bağlandı:', this.liveChatId);
+                    
+                    // İlk mesaj kontrolünü yap
+                    this.parseMessages();
+                    
+                    // Başarılı
+                    resolve();
+                } catch (apiError) {
+                    console.error('Chat API hatası:', apiError);
+                    
+                    // Kullanıcı dostu hata mesajı
+                    if (apiError.message.includes('canlı yayın')) {
+                        reject(new Error('Bu video için aktif canlı yayın sohbeti bulunamadı. Lütfen aktif bir yayın ID\'si girin.'));
+                    } else {
+                        reject(new Error('API bağlantı hatası: ' + apiError.message));
+                    }
+                    
+                    // Hata durumunda simülasyon moduna geç
+                    if (CONFIG.simulationMode) {
+                        console.warn('API hatası nedeniyle simülasyon moduna geçiliyor');
+                        this.startSimulation();
+                        resolve();
+                    }
                 }
             } catch (error) {
-                console.error('Chat bağlantısı hatası:', error);
+                console.error('Chat bağlantısı genel hatası:', error);
                 reject(error);
                 
                 // Hata durumunda simülasyon moduna geç
@@ -138,14 +145,22 @@ class ChatParser {
      * Bağlantıyı kes
      */
     disconnect() {
-        if (this.iframe) {
-            this.iframe.remove();
-            this.iframe = null;
+        // Artık iframe kullanmadığımız için temizleme yapmıyoruz
+        // Zamanlayıcıları temizle
+        if (this.pollingTimeout) {
+            clearTimeout(this.pollingTimeout);
+            this.pollingTimeout = null;
         }
         
-        if (this.checkInterval) {
-            clearInterval(this.checkInterval);
-            this.checkInterval = null;
+        if (this.simulationInterval) {
+            clearInterval(this.simulationInterval);
+            this.simulationInterval = null;
+        }
+        
+        // Simülasyon varsa temizle
+        if (this.simulationTimeout) {
+            clearTimeout(this.simulationTimeout);
+            this.simulationTimeout = null;
         }
         
         this.connected = false;
@@ -188,35 +203,63 @@ class ChatParser {
     }
     
     /**
-     * Chat mesajlarını çek ve işle
+     * Chat mesajlarını çek ve işle - Backend API kullanarak
      */
     parseMessages() {
-        if (!this.connected || !this.iframe) return;
+        if (!this.connected) return;
         
         try {
-            // iframe içindeki chat-frame'i bul
-            const chatFrame = this.iframe.contentDocument || this.iframe.contentWindow.document;
+            // Backend API'den mesajları al
+            this.fetchMessagesFromApi();
+        } catch (error) {
+            console.error('Chat mesajları çekilemedi:', error);
             
-            // Tüm mesaj elementlerini bul
-            const chatItems = chatFrame.querySelectorAll('yt-live-chat-text-message-renderer');
+            // Hata durumunda simülasyon moduna geç
+            if (CONFIG.simulationMode) {
+                console.warn('Gerçek chat okunmuyor, simülasyona geçiliyor');
+                this.disconnect();
+                this.startSimulation();
+            }
+        }
+    }
+    
+    /**
+     * Backend API'den mesajları al
+     */
+    async fetchMessagesFromApi() {
+        try {
+            // API endpoint'i
+            const apiUrl = `/api/chat/${this.videoId}`;
+            const url = new URL(apiUrl, window.location.origin);
             
-            if (!chatItems || chatItems.length === 0) {
-                return;
+            // Sayfa token'ı varsa ekle
+            if (this.nextPageToken) {
+                url.searchParams.append('pageToken', this.nextPageToken);
             }
             
-            // Her mesajı işle
-            chatItems.forEach(item => {
-                try {
-                    // Mesaj ID'sini al
-                    const messageId = item.id;
-                    
+            // API isteği gönder
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'API hatası');
+            }
+            
+            const data = await response.json();
+            
+            // Sonraki sayfa token'ını kaydet
+            this.nextPageToken = data.nextPageToken;
+            
+            // Mesajları işle
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(message => {
                     // Bu mesajı daha önce işledik mi?
-                    if (this.lastMessageIds.has(messageId)) {
+                    if (this.lastMessageIds.has(message.id)) {
                         return;
                     }
                     
                     // Mesajı işlendi olarak işaretle
-                    this.lastMessageIds.add(messageId);
+                    this.lastMessageIds.add(message.id);
                     
                     // Maksimum 1000 ID tutarak belleği yönet
                     if (this.lastMessageIds.size > 1000) {
@@ -224,44 +267,30 @@ class ChatParser {
                         this.lastMessageIds.delete(firstId);
                     }
                     
-                    // Yazar bilgilerini al
-                    const authorElement = item.querySelector('#author-name');
-                    const authorName = authorElement ? authorElement.textContent.trim() : 'Anonim';
-                    
-                    // Mesaj metnini al
-                    const messageElement = item.querySelector('#message');
-                    const message = messageElement ? messageElement.textContent.trim() : '';
-                    
-                    // Zaman damgasını al (varsa)
-                    const timestampElement = item.querySelector('#timestamp');
-                    const timestamp = timestampElement ? timestampElement.textContent.trim() : '';
-                    
-                    // Profil fotoğrafını al
-                    const authorPhotoElement = item.querySelector('#img');
-                    const authorPhotoUrl = authorPhotoElement ? authorPhotoElement.src : null;
-                    
                     // Mesajı callback ile geri döndür
                     this.messageCallback({
-                        id: messageId,
-                        authorName: authorName,
-                        message: message,
-                        timestamp: timestamp,
-                        authorPhotoUrl: authorPhotoUrl
+                        id: message.id,
+                        authorName: message.authorName,
+                        message: message.message,
+                        timestamp: message.publishedAt,
+                        authorPhotoUrl: message.authorProfileImageUrl
                     });
-                    
-                } catch (itemError) {
-                    console.warn('Mesaj ayrıştırma hatası:', itemError);
-                }
-            });
-        } catch (error) {
-            console.error('Chat mesajları çekilemedi:', error);
-            
-            // Eğer iframe erişilemez olursa, simülasyon moduna geç
-            if (CONFIG.simulationMode) {
-                console.warn('Gerçek chat okunmuyor, simülasyona geçiliyor');
-                this.disconnect();
-                this.startSimulation();
+                });
             }
+            
+            // Bir sonraki kontrol için zamanlayıcı ayarla
+            const pollingInterval = data.pollingIntervalMillis || CONFIG.chatCheckInterval;
+            this.pollingTimeout = setTimeout(() => {
+                this.parseMessages();
+            }, pollingInterval);
+            
+        } catch (error) {
+            console.error('API veri çekme hatası:', error);
+            
+            // Bir sonraki kontrol için zamanlayıcı ayarla (hata durumunda daha uzun aralık)
+            this.pollingTimeout = setTimeout(() => {
+                this.parseMessages();
+            }, CONFIG.chatCheckInterval * 2);
         }
     }
 }
