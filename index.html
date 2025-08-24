@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SlitherChat.io - YouTube Chat Yılan Oyunu</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>SlitherChat.io</h1>
+            <div class="status">
+                <div id="playerCount">Yılanlar: 0</div>
+                <div id="connectionStatus">Bağlantı: Bekleniyor...</div>
+            </div>
+        </header>
+
+        <div class="youtube-input">
+            <input type="text" id="youtubeUrl" placeholder="YouTube canlı yayın linki girin">
+            <button id="startButton">Başlat</button>
+            <button id="stopButton" disabled>Durdur</button>
+        </div>
+
+        <div class="game-area">
+            <canvas id="gameCanvas"></canvas>
+            <div id="gameOverlay">
+                            <div class="overlay-content">
+                <h2>SlitherChat.io</h2>
+                <p>YouTube canlı yayın linki girin ve Başlat'a tıklayın</p>
+                <p>Chat'e mesaj yazanlar yılanlara dönüşecek</p>
+                <p><b>Not: HTTP sunucusu (http://localhost:8080) üzerinden açılmalıdır</b></p>
+            </div>
+            </div>
+        </div>
+        
+        <div class="side-panel">
+            <div class="chat-feed">
+                <h3>Canlı Sohbet</h3>
+                <div id="chatMessages"></div>
+            </div>
+            <div class="leaderboard">
+                <h3>Liderlik Tablosu</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sıra</th>
+                            <th>İsim</th>
+                            <th>Puan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        <!-- Burası JS ile doldurulacak -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>Nasıl Çalışır?</h3>
+        <p>1. YouTube canlı yayın linkini yukarıya yapıştırın</p>
+        <p>2. Başlat butonuna tıklayın</p>
+        <p>3. Chat'e yazılan her mesajdan bir yılan oluşacak</p>
+        <p>4. Yılanlar otomatik olarak hareket edecek ve birbirlerini yiyebilecek</p>
+        <p>5. En büyük yılanlar lider tablosunda gösterilecek</p>
+    </div>
+
+    <!-- Iframe yükleyici (gizli) -->
+    <div id="youtubeIframeContainer" style="position:absolute; left:-9999px; top:-9999px; height:720px; width:1280px;"></div>
+    
+    <!-- Oyun ve Chat Script'leri -->
+    <script src="js/config.js"></script>
+    <script src="js/snake.js"></script>
+    <script src="js/food.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/chat-parser.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

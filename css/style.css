@@ -1,0 +1,278 @@
+/* Genel Stiller */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #121212;
+    color: #f0f0f0;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+.game-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+        "header header"
+        "input input"
+        "game side";
+    gap: 20px;
+    height: calc(100vh - 120px);
+}
+
+header {
+    grid-area: header;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    color: #4CAF50;
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.status {
+    display: flex;
+    gap: 20px;
+}
+
+.status div {
+    background-color: #1e1e1e;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+}
+
+#connectionStatus.connected {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#connectionStatus.disconnected {
+    background-color: #f44336;
+    color: white;
+}
+
+.youtube-input {
+    grid-area: input;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.youtube-input input {
+    flex: 1;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+    font-size: 1em;
+}
+
+.youtube-input button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#startButton {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#startButton:hover {
+    background-color: #45a049;
+}
+
+#stopButton {
+    background-color: #f44336;
+    color: white;
+}
+
+#stopButton:hover {
+    background-color: #d32f2f;
+}
+
+button:disabled {
+    background-color: #555 !important;
+    cursor: not-allowed;
+}
+
+.game-area {
+    grid-area: game;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#gameCanvas {
+    width: 100%;
+    height: 100%;
+    background-color: #0a0a0a;
+}
+
+#gameOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    text-align: center;
+}
+
+.overlay-content h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    color: #4CAF50;
+}
+
+.overlay-content p {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.side-panel {
+    grid-area: side;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+}
+
+.chat-feed, .leaderboard {
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    padding: 15px;
+    flex: 1;
+}
+
+h3 {
+    color: #4CAF50;
+    font-size: 1.3em;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 5px;
+}
+
+#chatMessages {
+    height: calc(100% - 40px);
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-message {
+    margin-bottom: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #333;
+}
+
+.author-name {
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+.message-content {
+    word-break: break-word;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #333;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #2a2a2a;
+}
+
+.instructions {
+    margin: 20px auto;
+    max-width: 1400px;
+    padding: 20px;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+}
+
+.instructions h3 {
+    color: #4CAF50;
+    font-size: 1.3em;
+    margin-bottom: 10px;
+}
+
+.instructions p {
+    margin-bottom: 8px;
+}
+
+/* Renkli Yılanlar */
+.snake-player-0 { color: #4CAF50; } /* Yeşil */
+.snake-player-1 { color: #2196F3; } /* Mavi */
+.snake-player-2 { color: #f44336; } /* Kırmızı */
+.snake-player-3 { color: #FF9800; } /* Turuncu */
+.snake-player-4 { color: #9C27B0; } /* Mor */
+.snake-player-5 { color: #FFEB3B; } /* Sarı */
+.snake-player-6 { color: #00BCD4; } /* Açık Mavi */
+.snake-player-7 { color: #FF5722; } /* Turuncu Kırmızı */
+
+/* Duyarlı Tasarım */
+@media screen and (max-width: 992px) {
+    .game-container {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "header"
+            "input"
+            "game"
+            "side";
+        height: auto;
+    }
+    
+    .game-area {
+        height: 60vh;
+    }
+    
+    .side-panel {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .side-panel {
+        grid-template-columns: 1fr;
+    }
+}
