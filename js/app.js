@@ -80,9 +80,11 @@ class SlitherChatApp {
         
         const youtubeUrl = this.youtubeUrlInput.value.trim();
         
-        // Simülasyon modunu kullanıcı seçimine bırak
-        // Eğer bir HTTP sunucusu üzerinden çalıştırılırsa iframe çalışacaktır
-        // CONFIG.simulationMode = false;
+        // GitHub Pages'te çalıştığında otomatik olarak simülasyon modu aktif olsun
+        if (window.location.hostname.includes('github.io')) {
+            CONFIG.simulationMode = true;
+            console.log('GitHub Pages tespit edildi: Simülasyon modu aktif');
+        }
         
         // Test modu kontrolü
         if (youtubeUrl === 'test' || youtubeUrl === '') {

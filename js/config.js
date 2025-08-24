@@ -38,7 +38,7 @@ const CONFIG = {
     maxLeaderboardEntries: 10, // Liderlik tablosunda gösterilecek maksimum oyuncu
     
     // Simülasyon ayarları
-    simulationMode: false, // Gerçek chat bağlantısı yoksa simülasyon modu
+    simulationMode: true, // GitHub Pages için simülasyon modu aktif edildi
     simulationMessages: [ // Simülasyon mesajları
         "Merhaba dünya!",
         "SlitherChat.io çok eğlenceli!",
